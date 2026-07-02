@@ -99,13 +99,14 @@ def by_key(path: str, key: str) -> Assessment | None:
     return idx.get(_normalize(key)) or idx.get(key.strip())
 
 
-def compact_catalog_text(path: str) -> str:
+def compact_text_for(assessments) -> str:
     """One line per assessment: id | name | type codes | job levels | duration
-    | first-sentence description. Kept short on purpose -- this whole block
-    is re-sent on every single turn, so trimming tokens here matters for
-    latency under the grader's per-call timeout."""
+    | first-sentence description. Kept short on purpose -- this block is
+    re-sent on every single turn, so trimming tokens here matters for both
+    latency and (on token-capped free tiers) whether the request is even
+    accepted at all."""
     lines = []
-    for a in load_catalog(path):
+    for a in assessments:
         levels = ",".join(a.job_levels) or "-"
         first_sentence = a.description.split(". ")[0][:140]
         lines.append(
@@ -113,3 +114,12 @@ def compact_catalog_text(path: str) -> str:
             f"{a.duration or 'untimed/unspecified'} | {first_sentence}"
         )
     return "\n".join(lines)
+
+
+def compact_catalog_text(path: str) -> str:
+    """Full-catalog serialization -- this IS what app/agent.py sends on
+    every call. (Earlier in development, a BM25 pre-filter briefly narrowed
+    this to a candidate subset, when this ran on a provider with a small
+    per-request token cap. That module was removed after switching back to
+    Gemini, whose context window fits the whole catalog. See APPROACH.md.)"""
+    return compact_text_for(load_catalog(path))
