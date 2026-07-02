@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: shl-assessment-recommender
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false   # set manually in the Render dashboard, never committed
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: LLM_TEMPERATURE
+        value: "0.2"
+      - key: MAX_TURNS
+        value: "8"
+      - key: CATALOG_PATH
+        value: data/catalog.json
+      - key: REQUEST_TIMEOUT_SECONDS
+        value: "25"

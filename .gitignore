@@ -1,5 +1,7 @@
-.env
+.venv/
 __pycache__/
 *.pyc
+.env
 .pytest_cache/
-app/data/raw_catalog.json
+*.egg-info/
+.DS_Store
