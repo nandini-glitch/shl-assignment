@@ -40,7 +40,8 @@ class Assessment:
     test_type: str         
     job_levels: tuple[str, ...]
     languages: tuple[str, ...]
-    duration: str           
+    duration: str   
+    remote: bool        
     adaptive: bool
     description: str
 
