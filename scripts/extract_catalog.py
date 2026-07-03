@@ -28,7 +28,7 @@ import sys
 
 import pdfplumber
 
-OVERLAY_TOP = 30.8  # pt offset where the "Pretty print" button overlay sits on every page
+OVERLAY_TOP = 30.8  
 
 
 def _keep(obj) -> bool:
@@ -62,7 +62,7 @@ def fix_wrapped_strings(text: str) -> str:
                 in_string = False
                 out.append(ch)
             elif ch == "\n":
-                out.append(" ")  # wrap artifact, not a real newline in the string
+                out.append(" ")  
             else:
                 out.append(ch)
         else:
@@ -75,7 +75,7 @@ def fix_wrapped_strings(text: str) -> str:
 def main(src: str, dst: str) -> None:
     raw = extract_text(src)
     fixed = fix_wrapped_strings(raw)
-    data = json.loads(fixed)  # raises loudly if extraction produced invalid JSON
+    data = json.loads(fixed)  
     ok = [d for d in data if d.get("status") == "ok"]
     print(f"parsed {len(data)} records, {len(ok)} with status=ok")
     with open(dst, "w", encoding="utf-8") as f:

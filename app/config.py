@@ -16,8 +16,7 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.2
     max_turns: int = 8
     catalog_path: str = "data/catalog.json"
-    request_timeout_seconds: int = 25  # leaves headroom under the grader's 30s cap
-
+    request_timeout_seconds: int = 25  
 
 @lru_cache
 def get_settings() -> Settings:

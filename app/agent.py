@@ -1,30 +1,20 @@
 """The agent's core turn logic.
 
-No framework here on purpose -- earlier versions of this used LangGraph for
-the control flow, but for a single classify-and-generate call per turn, a
-plain function with an if/else is genuinely simpler and has zero extra
-dependencies to version-match. LangGraph earns its keep for actual multi-node
-orchestration; this isn't that.
-
 Flow per turn:
 
     prefilter (regex, no LLM call) --injection detected--> refuse, return
         |
-        v clean
-    single structured-output call to Gemini (native google-genai SDK)
+        v 
+    clean single structured-output call to Gemini (native google-genai SDK)
         |
         v
     validate: every recommended id is looked up against the real catalog;
     anything that doesn't resolve is dropped, never returned.
 
-Design note on context: the full compact catalog (~23K tokens) is sent on
-every call, not a retrieved subset. This was tried both ways during
-development -- a BM25 pre-filter was briefly necessary when this ran on a
-provider with a 12K-token-per-request cap, but Gemini's context window
+Design note on context: the full compact catalog (~23K tokens) is sent on Gemini's context window
 (1M+ tokens) comfortably fits the whole catalog, which sidesteps the real
 risk of retrieval: a similarity/keyword threshold silently excluding the
-right assessment for a vaguely-worded query. Simpler and a better recall
-ceiling, given the model here supports it. See APPROACH.md.
+right assessment for a vaguely-worded query.See APPROACH.md.
 """
 import time
 
@@ -39,10 +29,7 @@ from app.guardrails import REFUSAL_REPLY, looks_like_injection
 from app.prompts import SYSTEM_PROMPT, build_catalog_block, build_transcript_block
 from app.schemas import ChatMessage, Recommendation
 
-# Transient-error retry budget for the single LLM call each turn makes.
-# Covers short-lived hiccups (a burst 429, a flaky 503) -- it will NOT save
-# you from a genuinely exhausted daily quota, which needs a plan/tier change,
-# not a retry loop.
+
 _MAX_LLM_RETRIES = 2
 _RETRY_BACKOFF_SECONDS = 5
 
@@ -116,13 +103,13 @@ def _call_model(settings, system: str, user: str) -> AgentTurn:
             if parsed is None:
                 raise ValueError("model response did not match the required schema")
             return parsed
-        except Exception as exc:  # noqa: BLE001 -- provider raises its own error types
+        except Exception as exc:  
             last_exc = exc
             transient = "429" in str(exc) or "RESOURCE_EXHAUSTED" in str(exc) or "503" in str(exc)
             if not transient or attempt == _MAX_LLM_RETRIES:
                 raise
             time.sleep(_RETRY_BACKOFF_SECONDS * (attempt + 1))
-    raise last_exc  # unreachable, keeps type checkers happy
+    raise last_exc  
 
 
 def run_turn(messages: list[ChatMessage]) -> tuple[str, list[Recommendation], bool]:
@@ -130,7 +117,7 @@ def run_turn(messages: list[ChatMessage]) -> tuple[str, list[Recommendation], bo
     history in, (reply, recommendations, end_of_conversation) out -- no
     hidden state, matching the stateless /chat contract."""
     settings = get_settings()
-    load_catalog(settings.catalog_path)  # warm/validate cache; raises early if catalog.json is bad
+    load_catalog(settings.catalog_path)  
 
     last_user = next((m.content for m in reversed(messages) if m.role == "user"), "")
     if looks_like_injection(last_user):
@@ -151,7 +138,6 @@ def run_turn(messages: list[ChatMessage]) -> tuple[str, list[Recommendation], bo
     else:
         recs = []
 
-    # end_of_conversation is only ever trusted on a genuine finalize with a
-    # non-empty, grounded shortlist -- never trust the flag in isolation.
+
     end_of_conversation = bool(turn.end_of_conversation and turn.intent == "finalize" and recs)
     return turn.reply, recs, end_of_conversation

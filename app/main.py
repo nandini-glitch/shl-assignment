@@ -13,8 +13,6 @@ logger = logging.getLogger("shl-agent")
 
 app = FastAPI(title="SHL Assessment Recommender", version="1.0.0")
 
-# The grader hits this from its own harness, not a browser, but permissive
-# CORS costs nothing here and avoids a class of avoidable failures.
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
@@ -35,8 +33,7 @@ _TURN_CAP_REPLY = (
 async def chat(payload: ChatRequest) -> ChatResponse:
     settings = get_settings()
 
-    # Defensive turn cap: the grader caps conversations at 8 turns itself, but
-    # we don't rely on a caller being well-behaved.
+    
     if len(payload.messages) > settings.max_turns:
         return ChatResponse(reply=_TURN_CAP_REPLY, recommendations=[], end_of_conversation=True)
 

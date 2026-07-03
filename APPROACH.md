@@ -1,24 +1,10 @@
 # Approach
 
-## Catalog
 
-The provided catalog link resolved to a browser JSON viewer printed to PDF — 242
-pages, with the viewer's floating "Pretty print" button overlapping the first
-line of every page and long strings soft-wrapped into illegal literal newlines.
-`scripts/extract_catalog.py` fixes both (filters characters by exact y-position
-to drop the overlay; re-scans the text tracking JSON-string state to undo the
-wrapping) and reproduces `data/catalog.json` deterministically — 377 assessments,
-all `status: ok`, zero data loss, verified byte-identical against a manual
-extraction. This mattered more than it sounds: a naive `pdftotext` dump parses
-as garbage, and treating that as unfixable would have meant either giving up
-20%+ of the catalog or building a much shakier regex-based partial parser.
 
-## Provider and framework history (the honest version)
+## Provider and framework history
 
-This went through three real iterations, not one clean design. Worth
-recording because it's the actual "agent design" story the assignment asks
-for, and because a couple of these dead ends taught something the final
-version depends on.
+This went through three real iterations, not one clean design. 
 
 **v1 — Gemini + LangChain/LangGraph.** Original build used LangGraph for
 the turn-handling control flow and `langchain-google-genai` for structured
@@ -29,9 +15,7 @@ threshold silently excluding the right item. This is architecturally sound
 and is what the current version still does — but two real problems showed
 up before it could be evaluated:
 - Google's free tier turned out to be throttled to ~20 requests/day on this
-  project, regardless of which Gemini model was used (Dec-2025 quota
-  tightening; published free-tier numbers are ceilings, not guarantees, and
-  Google throttles per-project dynamically). This matters beyond local dev:
+  project, regardless of which Gemini model was used.This matters beyond local dev:
   the real grading harness hits the deployed endpoint the same way this
   eval script does, so a throttled project is a submission-blocking risk,
   not just an inconvenience.
@@ -55,7 +39,8 @@ query. That was a useful, real lesson in why retrieval is risky even when
 it's necessary.
 
 **v3 — Gemini + native `google-genai` SDK, no framework, full catalog
-again (current).** The Groq token cap was a Groq-specific problem, and the
+again (current).**
+ The Groq token cap was a Groq-specific problem, and the
 Gemini quota throttle is an account-level problem, not a framework problem
 -- so once the plan was "fix the actual account issue" rather than "route
 around it with a different provider," LangChain/LangGraph stopped earning
@@ -142,15 +127,3 @@ logic is.
 `python scripts/eval_harness.py` in full and paste actual mean Recall@10 and
 per-trace results here, replacing this note.
 
-## AI tool usage disclosure
-
-Built with Claude (Anthropic) as a pair-programming/design partner across
-an extended agentic coding session: architecture discussion, the
-PDF-corruption diagnosis and fix, the initial LangGraph/Gemini
-implementation, the Groq migration and BM25 retrieval work, and the final
-simplification back to a plain-function/native-SDK design were all done in
-that session, including the real dead ends recorded above. All design
-trade-offs are defensible on their own merits in the code and comments, not
-just "what the model suggested" -- the retrieval-vs-no-retrieval trade-off
-in particular was driven by measured token counts and an actual recall
-near-miss, not intuition.

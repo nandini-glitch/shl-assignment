@@ -17,9 +17,9 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-# SHL's product-type taxonomy. The raw catalog stores full category names in
+#The raw catalog stores full category names in
 # "keys"; the API and the reference conversations both use these one-letter
-# codes, so we derive them once at load time rather than hardcoding per item.
+# codes, so we derive them once at load time.
 CATEGORY_TO_CODE = {
     "Ability & Aptitude": "A",
     "Biodata & Situational Judgment": "B",
@@ -37,11 +37,10 @@ class Assessment:
     entity_id: str
     name: str
     url: str
-    test_type: str          # e.g. "K,S"
+    test_type: str         
     job_levels: tuple[str, ...]
     languages: tuple[str, ...]
-    duration: str            # human string, e.g. "25 minutes" or "" if unknown
-    remote: bool
+    duration: str           
     adaptive: bool
     description: str
 
